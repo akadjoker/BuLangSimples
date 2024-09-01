@@ -14,9 +14,19 @@ enum ExprType
     LITERAL,
     L_NUMBER,
     L_STRING,
+    L_FUNCTION,
+    L_NATIVE,
+    L_CLASS,
+    L_STRUCT,
+    L_ARRAY,
+    L_MAP,
+    GET,
+    GET_DEF,
+    SET,
     VARIABLE,
     ASSIGN,
     LOGICAL,
+    CALL,
     NOW,
     E_COUNT
 };
@@ -103,6 +113,7 @@ public:
     Literal() : Expr() { type = ExprType::LITERAL; }
 
     Expr *accept( Visitor &v) override;
+    virtual ~Literal() { }
 };
 
 class NumberLiteral : public Literal
@@ -156,5 +167,48 @@ public:
     Expr *accept( Visitor &v) override;
 
     Token name;   
+    Expr *value;
+};
+
+class CallExpr : public Expr
+{
+public:
+    CallExpr() : Expr() { type = ExprType::CALL; }
+    Expr *accept( Visitor &v) override;
+    Token name;
+    Expr *callee;
+    std::vector<Expr*> args;
+
+};
+
+
+class GetExpr : public Expr
+{
+public:
+    GetExpr() : Expr() { type = ExprType::GET; }
+    Expr *accept( Visitor &v) override;
+    Token name;
+    Expr *object;
+
+};
+
+class GetDefinitionExpr : public Expr
+{
+public:
+    GetDefinitionExpr() : Expr() { type = ExprType::GET_DEF; }
+    Expr *accept( Visitor &v) override;
+    Token name;
+    Expr *variable;
+    std::vector<Expr*> values;
+};
+
+
+class SetExpr : public Expr
+{
+public:
+    SetExpr() : Expr() { type = ExprType::SET; }
+    Expr *accept( Visitor &v) override;
+    Token name;
+    Expr *object;
     Expr *value;
 };

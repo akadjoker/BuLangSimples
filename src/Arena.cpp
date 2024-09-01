@@ -221,11 +221,6 @@ void BlockArena::Free(void *p, u32 size)
 void BlockArena::Clear()
 {
 
-	for (u32 i = 0; i < m_chunkCount; ++i)
-	{
-		ArenaFree(m_chunks[i].blocks);
-	}
-
 	m_chunkCount = 0;
 	memset(m_chunks, 0, m_chunkSpace * sizeof(ArenaChunk));
 	memset(m_freeLists, 0, sizeof(m_freeLists));

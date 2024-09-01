@@ -29,6 +29,7 @@ Parser::~Parser()
 
 void Parser::clear()
 {
+    freecalls();
 
     tokens.clear();
     current = 0;
@@ -183,6 +184,16 @@ Expr *Parser::assignment()
            assign->value = value;
            expr = assign;
            return assign;
+        } else if (expr->type == ExprType::GET)
+        {
+            GetExpr *get = (GetExpr *)expr;
+           
+            SetExpr *set = Factory::as().make_set();
+            set->name  = get->name;
+            set->object = get->object;
+            set->value = value;
+           
+           return set;
         }
         else
         {
@@ -341,6 +352,7 @@ Expr *Parser::logical_xor()
 }
 
 
+
 Expr *Parser::equality()
 {
     Expr *expr = comparison();
@@ -425,7 +437,92 @@ Expr *Parser::unary()
         return u_expr;
     }
 
-    return primary();
+    return call();
+}
+
+
+Expr *Parser::call()
+{
+    Expr *expr = primary();
+
+
+
+    while (true)
+    {
+        Token name = previous();
+        if (match(TokenType::LEFT_PAREN))
+        {
+            expr = function_call(expr, name);
+        } else if (match(TokenType::DOT))
+        {
+            Token name = consume(TokenType::IDENTIFIER, "Expect property name after '.'.");
+           // INFO("Get property: %s %s", name.lexeme.c_str(),expr->toString().c_str());
+
+            if (match(TokenType::LEFT_PAREN))
+            {
+                 GetDefinitionExpr *get = Factory::as().make_get_definition();
+
+                if (!check(TokenType::RIGHT_PAREN))
+                {
+                    do
+                    {
+                        Expr *arg = expression();
+                        get->values.push_back(std::move(arg));
+                        
+                    } while (match(TokenType::COMMA));
+                }
+                consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.");
+
+                 get->name = name;
+                 get->variable = expr;
+                 return get;
+            }
+
+
+            GetExpr *get = Factory::as().make_get();
+            get->name = name;
+            get->object = expr;
+            return get;
+        } 
+        else
+        {
+            break;
+        }
+    }
+
+    return expr;
+}
+
+
+Expr *Parser::function_call(Expr *expr,  Token name )
+{
+    CallExpr *f = Factory::as().make_call();
+    if (!check(TokenType::RIGHT_PAREN))
+    {
+        do
+        {
+            Expr *arg = expression();
+            f->args.push_back(std::move(arg));
+            
+        } while (match(TokenType::COMMA));
+    }
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.");
+
+  //  INFO("Function call: %s", name.lexeme.c_str());
+
+
+   f->callee = expr;
+   f->name = name;
+   calls.push_back(f);
+    return f;
+}
+
+void Parser::freecalls()
+{
+    for (auto call : calls)
+    {
+       Factory::as().free_call(call);
+    }
 }
 
 Expr *Parser::primary()
@@ -506,8 +603,8 @@ Expr *Parser::primary()
         consume(TokenType::RIGHT_PAREN,"Expect ')' after expression.");
         return expr;
     }
-
-    Error("Expect expression.");
+    Token current = peek();
+    Error("Primary : Expect expression. "  + current.lexeme);
     
     return nullptr;
 }
@@ -540,20 +637,96 @@ Stmt *Parser::expression_statement()
 
 Stmt *Parser::variable_declaration()
 {
-   Token name = consume(TokenType::IDENTIFIER, "Expect variable name.");
+    Token name = consume(TokenType::IDENTIFIER, "Expect variable name.");
+    std::vector<Token> names;
+    names.push_back(name);
+
    Expr *initializer = nullptr;
    bool is_initialized = false;
-   if (match(TokenType::EQUAL))
+   if (match(TokenType::LEFT_BRACKET))
+   {
+        consume(TokenType::RIGHT_BRACKET, "Expect ']' after array declaration.");
+        std::vector<Expr*> values;
+    
+        if (match(TokenType::EQUAL))
+        {
+            
+            consume(TokenType::LEFT_BRACKET, "Expect '[' array initializer.");
+
+            Expr *exp = expression();
+            values.push_back(exp);
+
+            while (match(TokenType::COMMA)  && !isAtEnd())
+            {
+                Expr *exp = expression();
+                values.push_back(exp);
+            }
+
+            consume(TokenType::RIGHT_BRACKET, "Expect ']' after array initializer.");
+        }
+
+        consume(TokenType::SEMICOLON, "Expect ';' after array declaration.");
+
+        ArrayStmt *stmt =  Factory::as().make_array();
+        stmt->name = std::move(name);
+        stmt->values = std::move(values);
+        return stmt;
+   } else if  (match(TokenType::LEFT_BRACE))
+   {
+
+   } if (match(TokenType::EQUAL))
    {
        initializer = expression();
        is_initialized = true;
+   } else 
+   { 
+
+        while (match(TokenType::COMMA) && !isAtEnd())
+        {
+           Token name = consume(TokenType::IDENTIFIER, "Expect variable name.");
+           names.push_back(name);
+        }
+         if (match(TokenType::EQUAL))
+        {
+            initializer = expression();
+            is_initialized = true;
+        } 
    }
    consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
    Declaration *stmt =  Factory::as().make_declaration();
-   stmt->name = name;
+   stmt->names = std::move(names);
    stmt->is_initialized = is_initialized;
    stmt->initializer = initializer;
    return stmt;
+}
+
+Stmt *Parser::function_declaration()
+{
+    Token name = consume(TokenType::IDENTIFIER, "Expect function name.");
+    std::vector<std::string> names;
+
+    consume(TokenType::LEFT_PAREN, "Expect '(' after function name.");
+
+    if (!check(TokenType::RIGHT_PAREN))
+    {
+        do
+        {
+           Token name =  consume(TokenType::IDENTIFIER, "Expect parameter name.");
+           names.push_back(std::move(name.lexeme));
+        } while (match(TokenType::COMMA));
+    }
+    
+
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
+
+
+    consume(TokenType::LEFT_BRACE, "Expect '{' before function body.");
+
+    FunctionStmt *stmt =  Factory::as().make_function();
+    stmt->name = std::move(name);
+    stmt->args = std::move(names);
+    stmt->body = block();
+    return stmt;
 }
 
 Stmt *Parser::print_statement()
@@ -570,24 +743,48 @@ Stmt *Parser::print_statement()
 //******************************************************************************************************************* */
 Stmt *Parser::statement()
 {
-    if (match({TokenType::IF}))
+    if (match(TokenType::FUNCTION))
+    {
+        return function_declaration();
+    }
+    if (match(TokenType::IF))
     {
         return if_statement();
     }
-    if (match({TokenType::WHILE}))
+    if (match(TokenType::SWITCH))
+    {
+        return switch_statement();
+    }
+    if (match(TokenType::RETURN))
+    {
+        return return_statement();
+    }
+    if (match(TokenType::BREAK))
+    {
+        return break_statement();
+    }
+    if (match(TokenType::CONTINUE))
+    {
+        return continue_statement();
+    }
+    if (match(TokenType::WHILE))
     {
         return while_statement();
     }
-    if (match({TokenType::FOR}))
+    if (match(TokenType::DO))
+    {
+        return do_statement();
+    }
+    if (match(TokenType::FOR))
     {
         return for_statement();
     }
-    if (match({TokenType::PRINT}))
+    if (match(TokenType::PRINT))
     {
         return print_statement();
     }
 
-    if (match({TokenType::LEFT_BRACE}))
+    if (match(TokenType::LEFT_BRACE))
     {
         return block();
     }
@@ -599,9 +796,18 @@ Stmt *Parser::declarations()
 {
     try 
     {
-        if (match({TokenType::VAR}))
+        if (match(TokenType::VAR))
         {
             return variable_declaration();
+        }
+        if (match(TokenType::STRUCT))
+        {
+            return struct_declaration();
+        }
+
+        if (match(TokenType::CLASS))
+        {
+            return class_declaration();
         }
         return statement();
     }
@@ -617,14 +823,14 @@ Stmt *Parser::declarations()
 
 Stmt *Parser::block()
 {
-    std::vector<Stmt *> statements;
+    BlockStmt *stmt =  Factory::as().make_block();
     while (!check(TokenType::RIGHT_BRACE) && !isAtEnd())
     {
-        statements.push_back(declarations());
+        stmt->statements.push_back(declarations());
     }
     consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
-    BlockStmt *stmt =  Factory::as().make_block();
-    stmt->statements = statements;
+
+
     return stmt;
 }
 
@@ -634,6 +840,23 @@ Stmt *Parser::if_statement()
     Expr *condition = expression();
     consume(TokenType::RIGHT_PAREN, "Expect ')' after if condition.");
     Stmt *thenBranch = statement();
+
+
+    std::vector<ElifStmt*> elifBranch;
+    while (match(TokenType::ELIF))
+    {
+        consume(TokenType::LEFT_PAREN, "Expect '(' after 'elif'.");
+        Expr* condition = expression();
+        consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
+        Stmt *thenBranch = statement();
+        ElifStmt *elif =  Factory::as().make_elif();
+        elif->condition = condition;
+        elif->then_branch = thenBranch;
+        elifBranch.push_back(elif);
+    }
+    
+
+
     Stmt *elseBranch = nullptr;
     if (match(TokenType::ELSE))
     {
@@ -643,6 +866,7 @@ Stmt *Parser::if_statement()
     stmt->condition = condition;
     stmt->then_branch = thenBranch;
     stmt->else_branch = elseBranch;
+    stmt->elifBranch = std::move(elifBranch);
     return stmt;
 }
 
@@ -656,6 +880,21 @@ Stmt *Parser::while_statement()
     stmt->condition = condition;
     stmt->body = body;
     return stmt;
+}
+
+Stmt *Parser::do_statement()
+{
+
+    Stmt *body = statement();
+    consume(TokenType::WHILE, "Expect 'while' after 'do'.");
+    consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+    Expr *condition = expression();
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after 'while' condition.");
+    consume(TokenType::SEMICOLON, "Expect ';' after 'while' body.");
+    DoStmt *stmt =  Factory::as().make_do();
+    stmt->condition = condition;
+    stmt->body = body;
+    return stmt;    
 }
 
 Stmt *Parser::for_statement()
@@ -703,6 +942,135 @@ Stmt *Parser::for_statement()
     stmt->increment = increment;
     stmt->body = body;
 
+
+    return stmt;
+}
+
+Stmt *Parser::return_statement()
+{
+    Token keyword = previous();
+    Expr *value = nullptr;
+    if (!check(TokenType::SEMICOLON))
+    {
+        value = expression();
+    }
+    consume(TokenType::SEMICOLON, "Expect ';' after return value.");
+    ReturnStmt *stmt =  Factory::as().make_return();
+    stmt->value = value;
+    return stmt;
+}
+
+Stmt *Parser::break_statement()
+{
+    consume(TokenType::SEMICOLON, "Expect ';' after 'break'.");
+    BreakStmt *stmt =  Factory::as().make_break();
+    return stmt;
+}
+
+Stmt *Parser::continue_statement()
+{
+    consume(TokenType::SEMICOLON, "Expect ';' after 'continue'.");
+    ContinueStmt *stmt =  Factory::as().make_continue();
+    return stmt;
+
+}
+
+Stmt *Parser::switch_statement()
+{
+    consume(TokenType::LEFT_PAREN,"Expect '(' after 'switch'.");
+    Expr *condition = expression();
+    consume(TokenType::RIGHT_PAREN,"Expect ')' after condition.");
+    consume(TokenType::LEFT_BRACE,"Expect '{' before switch block.");
+    
+    
+    std::vector<CaseStmt*> cases;
+    while (match(TokenType::CASE))
+    {
+        Expr *exp = expression();
+        consume(TokenType::COLON,"Expect ':' after case expression.");
+        Stmt *body = statement();
+        CaseStmt *case_stmt =  Factory::as().make_case();
+        case_stmt->condition = exp;
+        case_stmt->body = body;
+        cases.push_back(case_stmt);
+    }
+
+
+    Stmt* default_case= nullptr;
+    if (match(TokenType::DEFAULT))
+    {
+        consume(TokenType::COLON,"Expect ':' after default case.");
+        default_case = statement();
+    }
+
+    consume(TokenType::RIGHT_BRACE,"Expect '}' after switch block.");
+
+    if (default_case == nullptr && cases.size() == 0)
+    {
+        Error(peek(), "Switch statement must have at least one case or default case.");
+    }
+   
+
+    SwitchStmt *stmt =  Factory::as().make_switch();
+    stmt->condition = condition;
+    stmt->cases = std::move(cases);
+    stmt->defaultBranch = default_case;
+    return stmt;
+}
+
+Stmt *Parser::class_declaration()
+{
+
+    Token name = consume(TokenType::IDENTIFIER, "Expect class name.");
+    consume(TokenType::LEFT_BRACE, "Expect '{' before class body.");
+
+    ClassStmt *stmt =  Factory::as().make_class();
+    stmt->name = std::move(name);
+
+    
+
+    while (!check(TokenType::RIGHT_BRACE) && !isAtEnd())
+    {
+        //stmt->fields.push_back(variable_declaration());
+    }
+
+    consume(TokenType::RIGHT_BRACE, "Expect '}' after class body.");
+
+    return stmt;
+}
+
+Stmt *Parser::struct_declaration()
+{
+
+    Token name = consume(TokenType::IDENTIFIER, "Expect struct name.");
+    consume(TokenType::LEFT_BRACE, "Expect '{' before struct body.");
+
+    StructStmt *stmt =  Factory::as().make_struct();
+    stmt->name = std::move(name);
+
+    
+
+    while (!check(TokenType::RIGHT_BRACE) && !isAtEnd())
+    {
+        if (match(TokenType::VAR))
+        {
+            Token name = consume(TokenType::IDENTIFIER, "Expect variable name.");
+            stmt->fields.push_back(std::move(name));
+            if (match(TokenType::EQUAL))
+            {
+                stmt->values.push_back(expression());
+            } else 
+            {
+                Literal *l =  Factory::as().make_literal();
+                stmt->values.push_back(l);
+            }
+            consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
+        }
+          
+    }
+
+    consume(TokenType::RIGHT_BRACE, "Expect '}' after struct body.");
+    consume(TokenType::SEMICOLON, "Expect ';' after struct declaration.");
 
     return stmt;
 }

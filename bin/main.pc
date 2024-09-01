@@ -1,18 +1,12 @@
-var a=10;
-
-
-
-print("------------------------------1");
-for(var i=0; i <= 5; i++)
+def timer()
 {
-    print(i);
+    return now;
 }
 
+timer();
 
-print("------------------------------2");
+writeln("luis ",9,true,"\n");
+writeln("luis ",9,true);
+writeln("luis ",9,true);
 
-
-for(var i=0; i <= 5; i++)
-{
-    print(i);
-}
+print("By BY");

@@ -377,13 +377,37 @@ void Lexer::initialize()
 
   keywords["else"] = TokenType::ELSE;
 
+ keywords["elif"] = TokenType::ELIF;
+
+
+  keywords["switch"] = TokenType::SWITCH;
+
+  keywords["case"] = TokenType::CASE;
+
+  keywords["default"] = TokenType::DEFAULT;
+
+
+
+
   keywords["for"] = TokenType::FOR;
 
   keywords["while"] = TokenType::WHILE;
 
+  keywords["do"] = TokenType::DO;
+
   keywords["return"] = TokenType::RETURN;
 
-  keywords["function"] = TokenType::FUNCTION;
+  keywords["break"] = TokenType::BREAK;
+
+  keywords["continue"] = TokenType::CONTINUE;
+
+  keywords["def"] = TokenType::FUNCTION;
+
+  keywords["class"] = TokenType::CLASS;
+
+  keywords["struct"] = TokenType::STRUCT;
+
+  keywords["this"] = TokenType::THIS;
 
   keywords["nil"] = TokenType::NIL;
   keywords["var"] = TokenType::VAR;

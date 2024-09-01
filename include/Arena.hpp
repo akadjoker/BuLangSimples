@@ -5,8 +5,8 @@
 
 
 const u32 stackSize = 100 * 1024;	// 100k
-const u32 maxStackEntries = 32;
-const u32 blockSizeCount = 14;
+const u32 maxStackEntries = 256;
+const u32 blockSizeCount = 64;//14
 
 struct ArenaBlock;
 struct ArenaChunk;

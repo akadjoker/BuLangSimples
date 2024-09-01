@@ -6,10 +6,10 @@
 #include <cstddef> // for std::nullptr_t
 #include <cstdio>
 
-#include <cstring>
-#include <cstdint>
-#include <cstdlib>
-#include <cstdio>
+//#include <cstring>
+//#include <cstdint>
+//#include <cstdlib>
+
 
 #include <stdarg.h>
 
@@ -18,7 +18,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include <stack>
+
 #include <math.h>
 
 #include <cassert>

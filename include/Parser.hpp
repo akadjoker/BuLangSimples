@@ -59,7 +59,10 @@ private:
     Expr* logical_xor(); 
 
 
-  
+    Expr *call(); 
+    Expr *function_call(Expr *callee,  Token name );
+
+    void freecalls();
 
 
     Expr *now();
@@ -67,7 +70,8 @@ private:
     Program *program();
 
     Stmt *expression_statement();
-    Stmt  *variable_declaration();
+    Stmt *variable_declaration();
+    Stmt *function_declaration();
     Stmt *print_statement();
     Stmt *statement();
     Stmt *declarations();
@@ -75,8 +79,14 @@ private:
 
     Stmt *if_statement();
     Stmt *while_statement();
+    Stmt *do_statement();
     Stmt *for_statement();
+    Stmt *return_statement();
+    Stmt *break_statement();
+    Stmt *continue_statement();
+    Stmt *switch_statement();
+    Stmt *class_declaration();
+    Stmt *struct_declaration();
 
-
-
+    std::vector<CallExpr*> calls;
 };

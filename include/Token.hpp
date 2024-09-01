@@ -56,6 +56,7 @@ enum class TokenType
 
     IF,
     ELSE,
+    ELIF,
  
 
 
@@ -71,13 +72,19 @@ enum class TokenType
 
 
     // LOOPS
+    DO,
     WHILE,
     FOR,
-   
+    BREAK,
+    CONTINUE,
     RETURN,
+    SWITCH,
+    CASE,
+    DEFAULT,
    
     CLASS,
     THIS,
+    STRUCT,
 
     // internals
     PRINT,
@@ -131,8 +138,13 @@ inline std::string tknString(TokenType type)
       
         case TokenType::IF:            return "IF";
         case TokenType::ELSE:          return "ELSE";
+        case TokenType::ELIF:          return "ELIF";
 
-        case TokenType::FUNCTION:      return "FUNCTION";
+        case TokenType::SWITCH:        return "SWITCH";
+        case TokenType::CASE:          return "CASE";
+        case TokenType::DEFAULT:       return "DEFAULT";
+
+        case TokenType::FUNCTION:      return "DEF";
 
         case TokenType::NIL:           return "NIL";
         case TokenType::FALSE:         return "FALSE";
@@ -141,15 +153,21 @@ inline std::string tknString(TokenType type)
         case TokenType::WHILE:         return "WHILE";
         case TokenType::FOR:           return "FOR";
 
+        case TokenType::DO:            return "DO";
+
         case TokenType::RETURN:        return "RETURN";
 
+        case TokenType::BREAK:         return "BREAK";
+        case TokenType::CONTINUE:      return "CONTINUE";
+
         case TokenType::CLASS:         return "CLASS";
+        case TokenType::STRUCT:        return "STRUCT";
         case TokenType::THIS:          return "THIS";
         case TokenType::PRINT:         return "PRINT";
         case TokenType::NOW:           return "NOW";
         case TokenType::ERROR:         return "ERROR";
         case TokenType::END_OF_FILE:   return "END_OF_FILE";
-        default:                       return "UNKNOWN";
+        default:                       return "UNKNOWN :" + std::to_string((int)type);
     }
 }
 

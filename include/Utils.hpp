@@ -50,3 +50,5 @@ class FatalException : public std::runtime_error
 public:
     explicit FatalException(std::string message) : std::runtime_error(message) {}
 };
+
+
