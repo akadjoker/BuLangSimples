@@ -81,6 +81,7 @@ private:
     Stmt *while_statement();
     Stmt *do_statement();
     Stmt *for_statement();
+    Stmt *from_statement();
     Stmt *return_statement();
     Stmt *break_statement();
     Stmt *continue_statement();

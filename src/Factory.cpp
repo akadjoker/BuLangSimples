@@ -118,6 +118,19 @@ void Factory::free_environment(Environment *expr)
     arena.Free(expr, sizeof(Environment));
 }
 
+EmptyExpr *Factory::make_empty()
+{
+
+    void *p = ARENA_ALLOC(sizeof(EmptyExpr));
+    return new (p) EmptyExpr();
+}
+
+
+void Factory::free_empty(EmptyExpr *expr)
+{
+    expr->~EmptyExpr();
+    ARENA_FREE(expr, sizeof(EmptyExpr));
+}
 
 BinaryExpr *Factory::make_binary()
 {
@@ -442,7 +455,7 @@ void Factory::free_get_definition(GetDefinitionExpr *expr)
 
 void Factory::delete_statement(Stmt *expr)
 {
-
+    
     if (expr)
     {
         if (expr->type == StmtType::DECLARATION)
@@ -512,6 +525,9 @@ void Factory::delete_statement(Stmt *expr)
         } else if (expr->type == StmtType::MAP)
         {
             free_map(static_cast<MapStmt*>(expr));
+        } else if (expr->type == StmtType::FROM)
+        {
+            free_from(static_cast<FromStmt*>(expr));
         }
         
         else 
@@ -523,7 +539,7 @@ void Factory::delete_statement(Stmt *expr)
 
 void Factory::delete_expression(Expr *expr)
 {
-
+    return;
     if (expr)
     {
         if (expr->type == ExprType::BINARY)
@@ -708,6 +724,21 @@ void Factory::free_for(ForStmt *expr)
 
     expr->~ForStmt();
     ARENA_FREE(expr, sizeof(ForStmt));
+}
+
+FromStmt *Factory::make_from()
+{
+    void *p = ARENA_ALLOC(sizeof(FromStmt));
+    return new (p) FromStmt();
+}
+
+void Factory::free_from(FromStmt *expr)
+{
+    delete_expression(expr->array);
+    delete_expression(expr->variable);
+    delete_statement(expr->body);
+    expr->~FromStmt();
+    ARENA_FREE(expr, sizeof(FromStmt));
 }
 
 ReturnStmt *Factory::make_return()

@@ -50,6 +50,7 @@ struct Visitor
     virtual u8 visit_program(Program *node) = 0;
     virtual u8 visit_function(FunctionStmt *node) = 0;
     virtual u8 visit_for(ForStmt *node) = 0;
+    virtual u8 visit_from(FromStmt *node) = 0;
     virtual u8 visit_return(ReturnStmt *node) = 0;
     virtual u8 visit_break(BreakStmt *node) = 0;
     virtual u8 visit_switch(SwitchStmt *node) = 0;
@@ -79,6 +80,7 @@ public:
     Environment( Environment *parent);
     virtual ~Environment();
 
+    void print();
 
     bool    define (const std::string &name, Expr *value);
     Expr *get(const std::string &name);
@@ -149,9 +151,8 @@ struct Function : public Literal
 struct Native : public Literal
 {
     Token name;
-    std::vector<Expr*> args;
-
     Native();
+
 };
 
 struct ClassLiteral : public Literal
@@ -163,9 +164,10 @@ struct ClassLiteral : public Literal
 struct StructLiteral : public Literal
 {
     std::string name;
-    std::unordered_map<std::string, Expr *> members;
+    std::map<std::string, Expr *> members;
     StructLiteral();
-    
+    void print();
+    Expr * clone() override;
 };
 
 struct ArrayLiteral : public Literal
@@ -173,12 +175,17 @@ struct ArrayLiteral : public Literal
     std::vector<Expr *> values;
     std::string name;
     ArrayLiteral();
+    void print() override;
+    Expr * clone() override;
+
 };
 
 struct MapLiteral : public Literal
 {
-    std::unordered_map<std::string, Expr *> values;
+    std::unordered_map<Expr*, Expr *> values;
+    ExprType key_type;
     MapLiteral();
+    Expr * clone() override;
 };
 
 struct Compiler : public Visitor
@@ -202,7 +209,8 @@ struct Compiler : public Visitor
         Expr* visit_get_definition(GetDefinitionExpr *node) override;
         Expr *visit_set(SetExpr *node) override;
         Expr *visit_call_native(CallExpr *node) ;
-        
+        Expr *visit_call_struct(CallExpr *node,Expr *expr) ;
+        Expr *visit_call_function(CallExpr *node, Expr *expr);
 
         u8 execute(Stmt *stmt);
 
@@ -213,6 +221,7 @@ struct Compiler : public Visitor
         u8 visit_if(IFStmt  *node)override;
         u8 visit_while(WhileStmt *node)override;
         u8 visit_for(ForStmt *node)override;
+        u8 visit_from(FromStmt *node)override;
         u8 visit_do(DoStmt *node);
         u8 visit_return(ReturnStmt *node)override;
         u8 visit_break(BreakStmt *node)override;

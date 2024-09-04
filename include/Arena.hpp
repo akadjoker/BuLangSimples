@@ -11,8 +11,9 @@ const u32 blockSizeCount = 64;//14
 struct ArenaBlock;
 struct ArenaChunk;
 
+void *ArenaAlloc(u32 size);
 
-
+void ArenaFree(void *p);
 
 struct  StackEntry
 {

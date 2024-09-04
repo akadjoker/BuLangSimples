@@ -22,8 +22,8 @@ target_precompile_headers(main PRIVATE include/pch.h)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
 
- target_compile_options(main PRIVATE -fsanitize=address -fsanitize=undefined -fsanitize=leak -g -Winvalid-pch -D_DEBUG)
-  target_link_options(main PRIVATE -fsanitize=address -fsanitize=undefined -fsanitize=leak -g -Winvalid-pch -D_DEBUG) 
+# target_compile_options(main PRIVATE -fsanitize=address -fsanitize=undefined -fsanitize=leak -g -Winvalid-pch -D_DEBUG)
+  #target_link_options(main PRIVATE -fsanitize=address -fsanitize=undefined -fsanitize=leak -g -Winvalid-pch -D_DEBUG) 
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
     target_compile_options(main PRIVATE -O3 -march=native -flto -funroll-loops -DNDEBUG)
     target_link_options(main PRIVATE -O3 -march=native -flto -funroll-loops -DNDEBUG)

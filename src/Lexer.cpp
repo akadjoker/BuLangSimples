@@ -391,6 +391,8 @@ void Lexer::initialize()
 
   keywords["for"] = TokenType::FOR;
 
+  keywords["from"] = TokenType::FROM;
+
   keywords["while"] = TokenType::WHILE;
 
   keywords["do"] = TokenType::DO;

@@ -75,6 +75,7 @@ enum class TokenType
     DO,
     WHILE,
     FOR,
+    FROM,
     BREAK,
     CONTINUE,
     RETURN,
@@ -152,6 +153,7 @@ inline std::string tknString(TokenType type)
       
         case TokenType::WHILE:         return "WHILE";
         case TokenType::FOR:           return "FOR";
+        case TokenType::FROM:          return "FROM";
 
         case TokenType::DO:            return "DO";
 

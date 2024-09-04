@@ -45,6 +45,9 @@ class Factory
         // Expr
         //
 
+        EmptyExpr *make_empty();
+        void free_empty(EmptyExpr *expr);
+
         BinaryExpr *make_binary();
         void free_binary(BinaryExpr *expr);
 
@@ -157,6 +160,9 @@ class Factory
 
         ForStmt *make_for();
         void free_for(ForStmt *expr);
+
+        FromStmt *make_from();
+        void free_from(FromStmt *expr);
 
 
         ReturnStmt *make_return();

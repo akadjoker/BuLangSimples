@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include <string>
 
 #include <math.h>

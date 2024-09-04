@@ -3,10 +3,11 @@
 #include "Expr.hpp" 
 #include "Interpreter.hpp"
 #include "Utils.hpp"
+#include "Factory.hpp"
 
 Expr *EmptyExpr::accept(Visitor &v)
 {
-    return v.visit(this);
+    return v.visit_empty_expression(this);
 }
 
 
@@ -44,13 +45,33 @@ Expr *NumberLiteral::accept(Visitor &v)
     return v.visit_number_literal(this);
 }
 
+void NumberLiteral::print()
+{
+    PRINT("%f", value);
+}
 
-
-
+Expr *NumberLiteral::clone()
+{
+    NumberLiteral *expr = Factory::as().make_number();
+    expr->value = value;
+    return expr;
+}
 
 Expr *StringLiteral::accept(Visitor &v)
 {
     return  v.visit_string_literal(this);
+}
+
+void StringLiteral::print()
+{
+    PRINT("%s", value.c_str());
+}
+
+Expr *StringLiteral::clone()
+{
+    StringLiteral *expr = Factory::as().make_string();
+    expr->value = value;
+    return expr;
 }
 
 Expr *NowExpr::accept(Visitor &v)
@@ -71,6 +92,11 @@ Expr *Assign::accept(Visitor &v)
 Expr *Literal::accept(Visitor &v)
 {
     return  v.visit_literal(this);
+}
+
+void Literal::print()
+{
+    PRINT("nil");
 }
 
 std::string Expr::toString()

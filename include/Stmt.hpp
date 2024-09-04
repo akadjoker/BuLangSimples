@@ -19,6 +19,7 @@ enum StmtType
     IF,
     WHILE,
     FOR,
+    FROM,
     DO,
     SWITCH,
     RETURN,
@@ -52,7 +53,7 @@ class BlockStmt : public Stmt
 public:
     BlockStmt() : Stmt() { type = StmtType::BLOCK; }
 
-    ~BlockStmt();
+
 
     u8 visit( Visitor &v) override;
 
@@ -145,7 +146,20 @@ public:
     Expr *condition;
     Expr *increment;
     Stmt *body;
+
 };
+
+
+class FromStmt : public Stmt
+{
+public:
+    FromStmt() : Stmt() { type = StmtType::FROM; }
+    u8 visit( Visitor &v) override;
+    Expr *variable;
+    Expr *array;
+    Stmt *body;
+};
+
 
 class PrintStmt : public Stmt
 {
@@ -212,6 +226,8 @@ public:
     
     std::vector<Token> fields;
     std::vector<Expr*> values;
+    std::vector<Expr*> args;
+    
     
     Token name;
 };

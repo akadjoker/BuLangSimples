@@ -37,10 +37,7 @@ Expr *Compiler::visit_assign(Assign *node)
 {
     if (!node) return nullptr;
     Expr *value = evaluate(node->value);
-    if (value == nullptr)
-    {
-        throw FatalException("Invalid assignment target.");
-    }
+
 
     Environment *environment = currentEnvironment();
 
@@ -57,7 +54,8 @@ Expr *Compiler::evaluate(Expr *node)
     Expr * result = visit(node);
     if (result == nullptr)
     {
-        throw FatalException("Evaluation error: Unknown expression type");
+        WARNING("Evaluation error: Unknown expression type");
+                return Factory::as().make_empty();
     }
     return result;
 }
@@ -78,38 +76,44 @@ Expr *Compiler::visit_call_native(CallExpr *node)
     interpreter->context->literals.clear();
     return result;
 }
-
-Expr *Compiler::visit_call(CallExpr *node)
+Expr *Compiler::visit_call_struct(CallExpr *node,Expr *expr) 
 {
 
-    if (!node) return nullptr;
+ //   INFO("CREATE STRUCT: %s ",node->name.lexeme.c_str());
+    Expr *result = global->get(node->name.lexeme);
+    if (!result)
+    { 
+        WARNING("Undefined struct: '%s'", node->name.lexeme.c_str());
+        return Factory::as().make_empty();
+    }
+    StructLiteral *s = static_cast<StructLiteral *>(result);
 
+    u32 index = 0;
 
-  
-
-          
-    Expr *callee = evaluate(node->callee);
-    Factory::as().delete_expression(node->callee);
-
-   Expr* var = global->get(node->name.lexeme);
-    if (var->type == ExprType::L_STRUCT)
+    if (!node->args.empty())
     {
-       // PRINT("CALL Struct: %s ", node->name.lexeme.c_str());
-        return callee;
+        if (node->args.size() > s->members.size())
+        {
+            WARNING("Too many arguments in struct call: '%s'", node->name.lexeme.c_str());
+        }
+        for (auto it = s->members.begin(); it != s->members.end(); it++)
+        {
+            if (index < node->args.size())
+            {
+                Expr *arg = evaluate(node->args[index]);
+
+                it->second = std::move(arg);
+            }
+            index++;
+        }
     }
 
-    if (var->type == ExprType::L_NATIVE)
-    {
-        return visit_call_native(node);
-    }
+    return s;
+}
 
-    //  INFO("CALL: %s %s", var->toString().c_str(),node->name.lexeme.c_str());
-
-    if (var->type != ExprType::L_FUNCTION)
-        return callee;
-
+Expr *Compiler::visit_call_function(CallExpr *node,Expr *callee) 
+{
     Function *function = static_cast<Function *>(callee);
-
     if (function->arity != node->args.size())
     {
         throw FatalException("Incorrect number of arguments in call to '" + node->name.lexeme +"' at line "+ std::to_string(node->name.line )+ " expected " + std::to_string(function->arity) + " but got " + std::to_string(node->args.size()));
@@ -117,14 +121,11 @@ Expr *Compiler::visit_call(CallExpr *node)
 
     enterBlock();
     Environment *environment = currentEnvironment();
-
-
     for (u32 i = 0; i < node->args.size(); i++)
     {
         Expr *arg = evaluate(node->args[i]);
         environment->define(function->args[i], std::move(arg));
     }
-
     Expr *result = nullptr;
     try  
     {
@@ -138,76 +139,92 @@ Expr *Compiler::visit_call(CallExpr *node)
     catch (ReturnException &e)
     {
         result = e.value;
-       
     }  
-
     exitBlock();
-
     Factory::as().delete_expression(callee);
-   
     if (result == nullptr)
     {
         result = Factory::as().make_literal();
     }
-
     return result;
 }
 
-Expr *Compiler::visit_get(GetExpr *node)
-{
-    INFO("GET Variable: %s", node->name.lexeme.c_str());
-    Expr *object = evaluate(node->object);
-    if (object->type==ExprType::L_STRUCT)
-    {
-        StructLiteral *sl = static_cast<StructLiteral *>(object);
 
-        if (sl->members.find(node->name.lexeme) != sl->members.end())
-        {
-            return sl->members[node->name.lexeme];
-        }
-    } else if (object->type == ExprType::L_ARRAY)
+Expr *Compiler::visit_call(CallExpr *node)
+{
+
+    if (!node)   return Factory::as().make_empty();
+          
+    Expr *callee = evaluate(node->callee);
+    Factory::as().delete_expression(node->callee);
+
+     Expr* var = global->get(node->name.lexeme);
+    if (var->type == ExprType::L_STRUCT)
     {
-        
+        visit_call_struct(node, callee);
     }
-    return  object;
-}
+
+    if (var->type == ExprType::L_NATIVE)
+    {
+        return visit_call_native(node);
+    }
+
+    //  INFO("CALL: %s %s", var->toString().c_str(),node->name.lexeme.c_str());
+
+    if (var->type != ExprType::L_FUNCTION)
+        return callee;
+
+    return visit_call_function(node, callee);
+} 
+
+
+
 
 Expr *Compiler::visit_get_definition(GetDefinitionExpr *node)
 {
 
-   //   INFO("GET Biltin defenition: %s ", node->name.lexeme.c_str());
+    //  INFO("GET Built int defenition: %s ", node->name.lexeme.c_str());
  
 
-    Expr *var   = evaluate(node->variable);
+    Expr *var     = evaluate(node->variable);
 
-     
+    
 
     if (var->type == ExprType::L_ARRAY)
     {
+        ArrayLiteral *earray = static_cast<ArrayLiteral *>(var);
+        Expr* expr    = global->get(earray->name);
+        if (!expr)  
+        {
+           ERROR("Array '%s' not found: " ,earray->name.c_str());
+           return var;
+        }
+        ArrayLiteral *array = static_cast<ArrayLiteral *>(expr);
 
-        ArrayLiteral *al = static_cast<ArrayLiteral *>(var);
-        Expr *builtint = global->get(al->name);
-        ArrayLiteral *array = static_cast<ArrayLiteral*>(builtint);
+        
+
+
 
 
         if (node->name.lexeme == "push")
         {
-                if (node->values.size() != 1)
+                if (node->values.size() < 1)
                 {
                     throw FatalException("Array 'push' requires 1 or more argument");
                 }
                 for (u32 i = 0; i < node->values.size(); i++)
                 {
                     Expr *value = evaluate(node->values[i]);
-                    array->values.push_back(value);
+                    array->values.push_back(value->clone());
                 }
-             return array;
+                return array;
+  
         } else if (node->name.lexeme == "pop")
         {
                 Expr* value = array->values.back();
                 array->values.pop_back();
                 return value;
-        } else if (node->name.lexeme == "length")
+        } else if (node->name.lexeme == "size")
         {
             NumberLiteral *result = Factory::as().make_number();
             result->value = array->values.size();
@@ -217,24 +234,32 @@ Expr *Compiler::visit_get_definition(GetDefinitionExpr *node)
         {
             if (node->values.size() != 1)
             {
-                throw FatalException("Array 'at' requires 1 argument");
+                ERROR("Array 'at' requires 1 argument");
+                return var;
             }
             Expr *value = evaluate(node->values[0]);
-            Factory::as().free_get_definition(node);
             if (value->type != ExprType::L_NUMBER)
             {
-                throw FatalException("Array index must be a number");
+                ERROR("Array index must be a number");
+                return var;
             }
             NumberLiteral *nl = static_cast<NumberLiteral *>(value);
-            if (nl->value < 0 || nl->value >= al->values.size())
+            if (nl->value < 0 || nl->value >= array->values.size())
             {
-                throw FatalException("Array index out of bounds");
+                ERROR("Array index out of bounds");
+                return var;
             }
 
-            int index = nl->value;
+            u32 index = (u32) static_cast<int>(nl->value);
+
+
             
-            return al->values[index];
-        } if (node->name.lexeme == "set")
+           return array->values[index];
+          
+
+    
+        
+        }else  if (node->name.lexeme == "set")
         {
             if (node->values.size() != 2)
             {
@@ -248,34 +273,65 @@ Expr *Compiler::visit_get_definition(GetDefinitionExpr *node)
                 throw FatalException("Array index must be a number");
             }
             NumberLiteral *nl = static_cast<NumberLiteral *>(value);
-            if (nl->value < 0 || nl->value >= al->values.size())
+            if (nl->value < 0 || nl->value >= array->values.size())
             {
                 Factory::as().free_get_definition(node);
                 throw FatalException("Array index out of bounds");
             }
 
             int index = nl->value;
-            al->values[index] = evaluate(node->values[1]);
-            return al->values[index];
-        } 
+
+            array->values[index] = value;
+
+            return var;
+        } else if (node->name.lexeme == "foreach")
+        {
+                if (node->values.size() < 1)
+                {
+                    throw FatalException("Array 'foreach' requires 1 function argument");
+                }
+                Expr *value = evaluate(node->values[0]);
+                if (value->type != ExprType::L_FUNCTION)
+                {
+                    Factory::as().free_get_definition(node);
+                    throw FatalException("Array 'foreach' requires 1 function argument");
+                }
+                
+                Function *fl = static_cast<Function *>(value);
+                INFO("Function: %s", fl->name.lexeme.c_str());
+                for (u32 i = 0; i < array->values.size(); i++)
+                {
+                      CallExpr *call = Factory::as().make_call();
+                      call->name = node->name;
+                      call->callee = value;
+                      call->args.push_back(array->values[i]);
+                     visit_call_function(call, value);
+                    
+                }
+              
+                //CallExpr *f = Factory::as().make_call();
+                
+
+
+                
+
+
+            return var;
+        }
         else 
         {
              WARNING("Unknown array function: %s", node->name.lexeme.c_str());
         }
-
     }
 
-    Factory::as().free_get_definition(node);
 
-  //  INFO("GET Biltin defenition: %s", var->toString().c_str());
-   // INFO("GET Biltin defenition: %s", value->toString().c_str());
 
     return var;
 }
 
-Expr *Compiler::visit_set(SetExpr *node)
+Expr *Compiler::visit_get(GetExpr *node)
 {
-
+  //  INFO("GET arg: %s", node->name.lexeme.c_str());
     Expr *object = evaluate(node->object);
     if (object->type==ExprType::L_STRUCT)
     {
@@ -283,8 +339,49 @@ Expr *Compiler::visit_set(SetExpr *node)
 
         if (sl->members.find(node->name.lexeme) != sl->members.end())
         {
-            sl->members[node->name.lexeme] = evaluate(node->value);
-            return sl->members[node->name.lexeme];
+            Expr *value = sl->members[node->name.lexeme];
+    
+            return value;
+        } else 
+        {
+            ERROR("Member not found: %s", node->name.lexeme.c_str());
+            return Factory::as().make_empty();
+        }
+    } else if (object->type == ExprType::L_ARRAY)
+    {
+        WARNING("Array GET: %s", node->name.lexeme.c_str());
+    }
+    return  object;
+}
+
+
+Expr *Compiler::visit_set(SetExpr *node)
+{
+
+   // INFO("SET arg: %s", node->name.lexeme.c_str());
+    Expr *object = evaluate(node->object);
+    if (object->type==ExprType::L_STRUCT)
+    {
+        StructLiteral *sl = static_cast<StructLiteral *>(object);
+
+        if (sl->members.find(node->name.lexeme) != sl->members.end())
+        {
+
+                Expr *value = evaluate(node->value);
+                if (value->type == ExprType::L_NUMBER)
+                {
+                    NumberLiteral *l = Factory::as().make_number();
+                    l->value = static_cast<NumberLiteral *>(value)->value;
+                    sl->members[node->name.lexeme] = l;
+                } else if (value->type == ExprType::L_STRING)
+                {
+                    StringLiteral *l = Factory::as().make_string();
+                    l->value = static_cast<StringLiteral *>(value)->value;
+                    sl->members[node->name.lexeme] = l;
+                } else
+                 {
+                    WARNING("TODO set value type: %s", value->toString().c_str());
+                }
         }
     }    
     return object;
@@ -438,55 +535,25 @@ u8 Compiler::visit_print_smt(PrintStmt *node)
     if (result->type == ExprType::L_NUMBER)
     {
         NumberLiteral *nl = static_cast<NumberLiteral *>(result);
-        PRINT("%f", nl->value);
+        nl->print();
          
     }
     else if (result->type == ExprType::L_STRING)
     {
         StringLiteral *sl = static_cast<StringLiteral *>(result);
-        PRINT("%s", sl->value.c_str());
+        sl->print();
     } else if (result->type == ExprType::LITERAL)
     {
         PRINT("nil");
     } else if (result->type == ExprType::L_STRUCT)
     {
         StructLiteral *sl = static_cast<StructLiteral *>(result);
-        PRINT("Struct :%s", sl->name.c_str());
+        sl->print();
+
     } else if (result->type == ExprType::L_ARRAY)
     {
         ArrayLiteral *al = static_cast<ArrayLiteral *>(result);
-        std::string literals = "";
-        for (u32 i = 0; i < al->values.size(); i++)
-        {
-            Expr *expr = al->values[i];
-            std::string value;
-            if (expr->type == ExprType::L_NUMBER)
-            {
-                NumberLiteral *nl = static_cast<NumberLiteral *>(expr);
-                value = std::to_string(nl->value);
-            } else if (expr->type == ExprType::L_STRING)
-            {
-                StringLiteral *sl = static_cast<StringLiteral *>(expr);
-                value =  sl->value;
-            } else if (expr->type == ExprType::LITERAL)
-            {
-                value = "nil";
-            }
-            else if (expr->type == ExprType::L_STRUCT)
-            {
-                StructLiteral *sl = static_cast<StructLiteral *>(expr);
-                value = sl->name;
-            }
-            if (i < al->values.size() - 1)
-            {
-                literals += value + ",";
-            } else
-            {
-                literals += value;
-            }
-        }
-        PRINT("[%s]", literals.c_str());
-        
+        al->print();
     }
     
     else 
@@ -529,10 +596,10 @@ u8 Compiler::visit_declaration(Declaration *node)
 
 
                 Token name = node->names[0];
-                if (environment->contains(name.lexeme))
-                {
-                    throw FatalException("Variable already defined: " + name.lexeme +" at line "+ std::to_string(name.line ));
-                }
+                // if (environment->contains(name.lexeme))
+                // {
+                //     throw FatalException("Variable already defined: " + name.lexeme +" at line "+ std::to_string(name.line ));
+                // }
             Expr * value = evaluate(node->initializer);
             environment->define(name.lexeme, value);
 
@@ -621,7 +688,8 @@ u8 Compiler::visit_if(IFStmt *node)
     Expr *condition = evaluate(node->condition);
     if (condition == nullptr)
     {
-        throw FatalException("Invalid condition");
+       WARNING("Invalid condition");
+       return 0;
     }
     if (is_truthy(condition))
     {
@@ -651,6 +719,7 @@ u8 Compiler::visit_while(WhileStmt *node)
 
     loop_count++;
 
+
     while (true)
     {
       
@@ -662,10 +731,16 @@ u8 Compiler::visit_while(WhileStmt *node)
             }
 
 
-        try 
-        {
+
+
+
+    try  
+    {
+
+       
             execute(node->body);
-        }
+        
+    }
         catch (BreakException &e)
         {
           //  break;
@@ -674,18 +749,18 @@ u8 Compiler::visit_while(WhileStmt *node)
         catch (ContinueException e)
         {
         }
-      }
-
+      
+    }
 
     loop_count--;
 
 
-    while (environmentStack.size() > 1)
-    {
-        Environment *env = environmentStack.top();
-        Factory::as().free_environment(env);
-        environmentStack.pop();
-    }
+    // while (environmentStack.size() > 1)
+    // {
+    //     Environment *env = environmentStack.top();
+    //     Factory::as().free_environment(env);
+    //     environmentStack.pop();
+    // }
 
 
     return 0;
@@ -777,7 +852,7 @@ u8 Compiler::visit_function(FunctionStmt *node)
 
 u8 Compiler::visit_struct(StructStmt *node)
 {
-  //  PRINT("VISIT Struct: %s", node->name.lexeme.c_str());
+   // PRINT("VISIT Struct: %s", node->name.lexeme.c_str());
 
     StructLiteral *sl = Factory::as().createStruct();
     sl->name = node->name.lexeme;
@@ -788,6 +863,12 @@ u8 Compiler::visit_struct(StructStmt *node)
         Expr *expr = evaluate(node->values[i]);
         sl->members[node->fields[i].lexeme] = expr;
     }
+
+    // for (u32 i = 0; i < node->methods.size(); i++)
+    // {
+    //     functionMap[node->methods[i].name.lexeme] = &node->methods[i];
+    // }
+    // node->args
 
     
     if (global->define(node->name.lexeme, sl))
@@ -831,7 +912,7 @@ u8 Compiler::visit_map(MapStmt *node)
 u8 Compiler::visit_for(ForStmt *node)
 {
 
-    enterBlock();
+     enterBlock();
 
      execute(node->initializer);
 
@@ -883,6 +964,80 @@ u8 Compiler::visit_for(ForStmt *node)
     return 0;
 }
 
+u8 Compiler::visit_from(FromStmt *node)
+{
+
+    
+
+    loop_count++;
+    Expr * array = evaluate(node->array);
+    if (!array || array->type != ExprType::L_ARRAY)
+    {
+        ERROR("Expected array to iterate");
+        return 0;
+    }
+    ArrayLiteral *al = static_cast<ArrayLiteral *>(array);
+    enterBlock();
+    Variable *varNode = static_cast<Variable *>(node->variable);
+    if (!varNode)
+    {
+        ERROR("Expected variable to iterate");
+        return 0;
+    }
+
+    std::string name = varNode->name.lexeme;
+
+    Environment *env = environmentStack.top();
+    env->define(name, Factory::as().make_literal());
+
+    //Expr *var = evaluate(node->variable);
+
+    
+
+
+    for (u32 i = 0; i < al->values.size(); i++)
+    {
+      
+       
+        Expr *value = al->values[i];
+        env->set(name, value);
+        
+            
+        try 
+        {
+            execute(node->body);
+        }
+        catch (BreakException &e)
+        {
+            break;
+        }
+
+        catch (ContinueException e)
+        {
+        }
+        
+
+      
+         
+        
+      }
+
+    loop_count--;
+        
+
+
+    exitBlock();
+
+
+    while (environmentStack.size() > 1)
+    {
+        Environment *env = environmentStack.top();
+        Factory::as().free_environment(env);
+        environmentStack.pop();
+    }
+
+    return 0;
+}
 
 u8 Compiler::visit_return(ReturnStmt *node)
 {
@@ -977,15 +1132,17 @@ Compiler::~Compiler()
 
 Expr *Compiler::visit_empty_expression(Expr *node)
 {
-    interpreter->Error("Empty expression");
-    Factory::as().delete_expression(node);
-    return nullptr;
+    return Factory::as().make_literal();
 }
 
 Expr *Compiler::visit_binary(BinaryExpr *node)
 {
     Expr *left  = evaluate(node->left);
+    if(!left)
+        return Factory::as().make_empty();
     Expr *right = evaluate(node->right);
+    if (!right)
+        return Factory::as().make_empty();
   
     switch (node->op.type)
     {
@@ -1239,7 +1396,7 @@ Expr *Compiler::visit_binary(BinaryExpr *node)
 
     interpreter->Error(node->op, "[BINARY] Unknown operator");
 
-    return nullptr;
+    return Factory::as().make_empty();
 }
 
 Expr *Compiler::visit_unary(UnaryExpr *expr)
@@ -1365,28 +1522,28 @@ Expr *Compiler::visit_grouping(GroupingExpr *node)
 
 Expr *Compiler::visit_literal(Literal *node)
 {
-    
-    NumberLiteral *result = Factory::as().make_number();
-    result->value = 0;
-    Factory::as().free_literal(node);
-    return result;
+   //Literal *result = Factory::as().make_literal();
+    //NumberLiteral *result = Factory::as().make_number();
+   // result->value = 0;
+   // Factory::as().free_literal(node);
+    return node;
 }
 
 Expr *Compiler::visit_number_literal(NumberLiteral *node)
 {
    
-    //NumberLiteral *result = Factory::as().make_number();
+   // NumberLiteral *result = Factory::as().make_number();
     //result->value = node->value;
-    //return result;
+   // return result;
     return node;
 }
 
 Expr *Compiler::visit_string_literal(StringLiteral *node)
 {
    // INFO("String: %s", node->value.c_str());
-  //  StringLiteral *result = Factory::as().make_string();
+   // StringLiteral *result = Factory::as().make_string();
    // result->value = node->value;
-  //  return result;
+   // return result;
     return node;
 }
 
@@ -1571,6 +1728,19 @@ Environment::~Environment()
     env_depth--;
 }
 
+void Environment::print()
+{
+
+    for (auto it = m_values.begin(); it != m_values.end(); it++)
+    {
+        Expr *l = it->second;
+        if (l != nullptr)
+        {
+            INFO("%s: %s", it->first.c_str(), l->toString().c_str());
+        }
+    }
+}
+
 bool Environment::define(const std::string &name, Expr *value)
 {
     if (m_values.find(name) != m_values.end())
@@ -1730,6 +1900,89 @@ StructLiteral::StructLiteral()
     type = ExprType::L_STRUCT;
     name = "";
 }
+std::string BuilArray(ArrayLiteral *al);
+
+std::string BuilStruct(StructLiteral *sl)
+{
+    std::string s=sl->name+ " ";
+    auto it = sl->members.begin();
+    while (it != sl->members.end())
+    {
+        std::string name = it->first;
+        std::string value;
+        Expr *expr = it->second;
+        if (expr->type == ExprType::L_NUMBER)
+        {
+            NumberLiteral *nl = static_cast<NumberLiteral *>(expr);
+            value = std::to_string(nl->value);
+        } else if (expr->type == ExprType::L_STRING)
+        {
+            StringLiteral *sl = static_cast<StringLiteral *>(expr);
+            value = sl->value;
+        } else if (expr->type == ExprType::L_STRUCT)
+        {
+            StructLiteral *sl = static_cast<StructLiteral *>(expr);
+            value = BuilStruct(sl);            
+        }else if (expr->type == ExprType::L_ARRAY)
+        {
+            ArrayLiteral *al = static_cast<ArrayLiteral *>(expr);
+            value = BuilArray(al);
+        }
+        s  += "("+ name+ ":" + value+")";
+        
+        it++;
+    }    
+    return s;
+}
+
+std::string BuilArray(ArrayLiteral *al)
+{
+    std::string s = "[";
+    for (u32 i = 0; i < al->values.size(); i++)
+    {
+        if (i > 0)
+        {
+            s += ", ";
+        }
+        if (al->values[i]->type == ExprType::L_NUMBER)
+        {
+            NumberLiteral *nl = static_cast<NumberLiteral *>(al->values[i]);
+            s +=  std::to_string(nl->value);
+        } else if (al->values[i]->type == ExprType::L_STRING)
+        {
+            StringLiteral *sl = static_cast<StringLiteral *>(al->values[i]);
+            s += sl->value;
+        } else if (al->values[i]->type == ExprType::L_STRUCT)
+        {
+            StructLiteral *sl = static_cast<StructLiteral *>(al->values[i]);
+            s += BuilStruct(sl);
+        } else if (al->values[i]->type == ExprType::L_ARRAY)
+        {
+            ArrayLiteral *al = static_cast<ArrayLiteral *>(al->values[i]);
+            s += BuilArray(al);
+        }
+
+    }
+    s += "]";
+    return s;
+}
+
+void StructLiteral::print()
+{
+        std::string s=BuilStruct(this);
+        PRINT("%s", s.c_str());
+}
+
+Expr *StructLiteral::clone()
+{
+    StructLiteral *l = Factory::as().createStruct();
+    l->name = name;
+    for (auto it = members.begin(); it != members.end(); it++)
+    {
+        l->members[it->first] = it->second->clone();
+    }
+    return l;
+}
 
 ArrayLiteral::ArrayLiteral()
 {
@@ -1737,9 +1990,38 @@ ArrayLiteral::ArrayLiteral()
 
 }
 
+void ArrayLiteral::print()
+{
+    std::string str = BuilArray(this);
+    PRINT("Array [%s]", str.c_str());
+    
+}
+
+Expr *ArrayLiteral::clone()
+{
+    ArrayLiteral *l = Factory::as().create_array();
+    l->name = name;
+    for (u32 i = 0; i < values.size(); i++)
+    {
+        l->values.push_back(values[i]->clone());
+    }
+    return l;
+}
+
 MapLiteral::MapLiteral()
 {
     type = ExprType::L_MAP;
+}
+
+Expr *MapLiteral::clone()
+{
+    MapLiteral *l = Factory::as().create_map();
+    l->key_type = key_type;
+    for (auto it = values.begin(); it != values.end(); it++)
+    {
+        l->values[it->first] = it->second->clone();
+    }
+    return l;
 }
 
 Native::Native()

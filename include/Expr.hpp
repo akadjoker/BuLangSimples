@@ -45,9 +45,9 @@ public:
 
     std::string toString();
 
-   
+    virtual void print() {};
+    virtual Expr* clone() { return nullptr; }
 };
-
 
 class EmptyExpr : public Expr
 {
@@ -114,6 +114,7 @@ public:
 
     Expr *accept( Visitor &v) override;
     virtual ~Literal() { }
+    virtual void print() override;
 };
 
 class NumberLiteral : public Literal
@@ -123,6 +124,10 @@ public:
 
 
     Expr *accept( Visitor &v) override;
+
+    void print() override;
+
+    Expr *clone() override;
 
     double value;
 };
@@ -136,6 +141,10 @@ public:
     StringLiteral() : Literal() { type = ExprType::L_STRING; }
  
     Expr *accept( Visitor &v) override;
+
+    void print() override;
+
+    Expr *clone() override;
 
     std::string value;
 };

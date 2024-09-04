@@ -170,6 +170,10 @@ Expr *Parser::assignment()
 {
     Expr *expr = logical_or();
     Token token = previous();
+
+   
+
+
     if (match(TokenType::EQUAL) )
     {
         Token op = previous();
@@ -440,6 +444,7 @@ Expr *Parser::unary()
     return call();
 }
 
+static int count = 10;
 
 Expr *Parser::call()
 {
@@ -456,32 +461,33 @@ Expr *Parser::call()
         } else if (match(TokenType::DOT))
         {
             Token name = consume(TokenType::IDENTIFIER, "Expect property name after '.'.");
-           // INFO("Get property: %s %s", name.lexeme.c_str(),expr->toString().c_str());
+           //      INFO("Get property: %s %s", name.lexeme.c_str(),expr->toString().c_str());
 
-            if (match(TokenType::LEFT_PAREN))
-            {
-                 GetDefinitionExpr *get = Factory::as().make_get_definition();
-
-                if (!check(TokenType::RIGHT_PAREN))
+                if (match(TokenType::LEFT_PAREN))
                 {
-                    do
+                    GetDefinitionExpr *get = Factory::as().make_get_definition();
+                    if (!check(TokenType::RIGHT_PAREN))
                     {
-                        Expr *arg = expression();
-                        get->values.push_back(std::move(arg));
-                        
-                    } while (match(TokenType::COMMA));
-                }
-                consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.");
+                        do
+                        {
+                            Expr *value  =  expression();
+                            get->values.push_back(std::move(value));
+                            
+                        } while (match(TokenType::COMMA));
+                    }
+                    consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments.");
 
-                 get->name = name;
-                 get->variable = expr;
-                 return get;
-            }
+                    get->name = std::move(name);
+                    get->variable = expr;
+                    return get;
+                }
+            
+
 
 
             GetExpr *get = Factory::as().make_get();
-            get->name = name;
-            get->object = expr;
+            get->name = std::move(name);
+            get->object = std::move(expr);
             return get;
         } 
         else
@@ -543,8 +549,8 @@ Expr *Parser::primary()
     
     if (match(TokenType::NIL))
     {
-          NumberLiteral *b = Factory::as().make_number();
-          b->value = 0;
+          Literal *b = Factory::as().make_literal();
+          
           return b;
     }
 
@@ -573,8 +579,13 @@ Expr *Parser::primary()
         Variable *expr =  Factory::as().make_variable();
         expr->name = name;
 
+          
+        
+
+
         if (match(TokenType::INC))
         {
+  
             Token op = previous();
             UnaryExpr *u_expr =  Factory::as().make_unary();
             u_expr->right = expr;
@@ -591,7 +602,7 @@ Expr *Parser::primary()
             u_expr->isPrefix = false;
             return u_expr;
         }
-
+    
 
         return expr;
     }
@@ -779,6 +790,10 @@ Stmt *Parser::statement()
     {
         return for_statement();
     }
+    if (match(TokenType::FROM))
+    {
+        return from_statement();
+    }
     if (match(TokenType::PRINT))
     {
         return print_statement();
@@ -895,6 +910,24 @@ Stmt *Parser::do_statement()
     stmt->condition = condition;
     stmt->body = body;
     return stmt;    
+}
+
+
+Stmt *Parser::from_statement()
+{
+
+    consume(TokenType::LEFT_PAREN, "Expect '(' after 'from'.");
+    consume(TokenType::VAR, "Expect variable declaration  .");
+    Expr * var =  expression();
+    consume(TokenType::COLON, "Expect ':' after variable.");
+    Expr *array =  expression();
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after 'from' condition.");
+    Stmt *body = statement();
+    FromStmt *stmt =  Factory::as().make_from();
+    stmt->variable = var;
+    stmt->array = array;
+    stmt->body = body;
+    return stmt;
 }
 
 Stmt *Parser::for_statement()

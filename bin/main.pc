@@ -1,12 +1,39 @@
-def timer()
+struct Pessoa
 {
-    return now;
+    var id;
+    var position;
+};
+
+struct vec2
+{
+    var x;
+    var y;
+};
+
+def game_loop(item)
+{
+    print(item);
+
+    return false;
 }
 
-timer();
 
-writeln("luis ",9,true,"\n");
-writeln("luis ",9,true);
-writeln("luis ",9,true);
+var lista[];
+
+
+
+var pessoa= Pessoa(10,vec2(10,10));
+
+
+lista.push(pessoa);
+
+lista.foreach(game_loop);
+from(var item: lista)
+{
+    print(item);
+}
+
+
+
 
 print("By BY");

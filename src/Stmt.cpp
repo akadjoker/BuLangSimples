@@ -6,10 +6,7 @@
 #include "Utils.hpp"
 
 
-BlockStmt::~BlockStmt()
-{
-  INFO("Freeing block");
-}
+
 
 u8 BlockStmt::visit(Visitor &v)
 {
@@ -132,4 +129,9 @@ u8 ArrayStmt::visit(Visitor &v)
 u8 MapStmt::visit(Visitor &v)
 {
     return v.visit_map(this);
+}
+
+u8 FromStmt::visit(Visitor &v)
+{
+    return v.visit_from(this);
 }
