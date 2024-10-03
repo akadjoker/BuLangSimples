@@ -1,0 +1,21 @@
+
+
+var i=90;
+
+
+i=0;
+while(i<=10)
+{   
+    var j=0;
+    print(i);
+
+    i++;
+
+    if (i>=5)
+    {
+        continue;
+    }
+
+    
+}
+print("By BY");

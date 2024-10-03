@@ -1,0 +1,3 @@
+/media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir
+/media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/edit_cache.dir
+/media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,52 @@
+[
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -x c++-header -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/cmake_pch.hxx.gch -c /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx.cxx",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx.cxx"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/Arena.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/Arena.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/Arena.cpp"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/Expr.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/Expr.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/Expr.cpp"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/Factory.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/Factory.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/Factory.cpp"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/Interpreter.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/Interpreter.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/Interpreter.cpp"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/Lexer.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/Lexer.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/Lexer.cpp"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/Parser.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/Parser.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/Parser.cpp"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/Stmt.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/Stmt.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/Stmt.cpp"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/Utils.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/Utils.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/Utils.cpp"
+},
+{
+  "directory": "/media/djoker/code/code2/cpp/VM/BuLangSimples/build",
+  "command": "/usr/bin/c++  -I/media/djoker/code/code2/cpp/VM/BuLangSimples/include -I/media/djoker/code/code2/cpp/VM/BuLangSimples/src  -fexceptions -frtti -fno-strict-aliasing -DUSE_GRAPHICS  -g -std=c++11 -Winvalid-pch -include /media/djoker/code/code2/cpp/VM/BuLangSimples/build/CMakeFiles/main.dir/cmake_pch.hxx -o CMakeFiles/main.dir/src/main.cpp.o -c /media/djoker/code/code2/cpp/VM/BuLangSimples/src/main.cpp",
+  "file": "/media/djoker/code/code2/cpp/VM/BuLangSimples/src/main.cpp"
+}
+]
